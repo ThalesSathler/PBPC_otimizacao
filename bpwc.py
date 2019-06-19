@@ -1,3 +1,12 @@
+def isSolutionViable(solution, BIN_TOTAL_SPACE, conflicts):
+    for bins in solution:
+        if bins["space_left"] < 0:
+            return False
+        for item in bins["itens"]:
+            if hasConflict(conflicts, item, bins):
+                return False
+    return True
+
 def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
     sortedItens = sorted(itens, key=lambda k: k["value"], reverse=True)
     solution = [] #array of bins
@@ -66,3 +75,21 @@ def test_first_fit():
     print("Finalziado com sucesso")
 
 test_first_fit()
+
+def test_solution_viability_with_conflicts():
+    BIN_TOTAL_SPACE = 5
+    
+    conflicts = {
+        "0":[2],
+        "1":[],
+        "2":[0]
+    }
+
+    fixture = [
+                {"itens":[{"value":5, "color": 0}], "space_left": 0},
+                {"itens":[{"value":4, "color": 0}, {"value":1, "color": 2}], "space_left": 0},
+                {"itens":[{"value":3, "color": 0},{"value":2, "color": 0}], "space_left": 0},
+              ]
+
+    response = isSolutionViable(fixture, BIN_TOTAL_SPACE, conflicts)
+    assert response == False
