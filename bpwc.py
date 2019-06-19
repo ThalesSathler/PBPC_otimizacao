@@ -23,6 +23,18 @@ def hasConflict(conflicts, item, bins):
             return True
     return False
 
+def get_lower_limit(bin_total_space, fixtures):
+    total_size = 0
+    for fixture in fixtures:
+        total_size += fixture["value"]
+    
+    lower_limit = total_size / bin_total_space
+    
+    if lower_limit > int(lower_limit):
+        lower_limit = int(lower_limit) + 1
+
+    return lower_limit
+
 def test_first_fit():
     BIN_TOTAL_SPACE = 5
 
@@ -36,7 +48,7 @@ def test_first_fit():
                 {"value":5, "color": 0},
                 {"value":4, "color": 0},
                 {"value":3, "color": 0},
-                {"value":1, "color": 2},
+                {"value":2, "color": 2},
                 {"value":2, "color": 0}
               ]
     
@@ -47,6 +59,8 @@ def test_first_fit():
                         {"itens":[{"value":1, "color": 2}], "space_left": 4},
                      ]
     
+    x = get_lower_limit(BIN_TOTAL_SPACE, fixture)
+
     S = first_fit_decreasing(fixture, BIN_TOTAL_SPACE, conflicts)
     assert S == solutionExpected
     print("Finalziado com sucesso")
