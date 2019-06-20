@@ -18,7 +18,7 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
             continue
         inserted = False
         for bins in solution:
-            if bins["space_left"] >= item["value"] and hasConflict(conflicts, item, bins) == False:
+            if bin_avaliable(bins, item, conflicts):
                 bins["itens"].append(item)
                 bins["space_left"] -= item["value"]
                 inserted = True
@@ -27,6 +27,18 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
         if not inserted:
             solution.append({"itens":[item], "space_left":BIN_TOTAL_SPACE-item["value"]})
     return solution
+
+def bin_avaliable(bins, item, conflicts):
+    return bins["space_left"] >= item["value"] and hasConflict(conflicts, item, bins) == False
+
+def reduce_bins(bins):    
+    bin_choiced = random.choice(bins)
+    bins.remove(bin_choiced)
+    number_bins = len(bins)
+    for item in bin_choiced["itens"]:
+        index_random = random.randint(0, number_bins - 1)
+        add_item_in_bin(bins[index_random], item)
+    return bins
                 
 def hasConflict(conflicts, item, bins):
     for item_bin in bins["itens"]:
@@ -50,15 +62,6 @@ def add_item_in_bin(bin, item):
     bin["itens"].append(item)
     bin["space_left"] = bin["space_left"] - item["value"]
     return bin
-
-def reduce_bins(bins):    
-    bin_choiced = random.choice(bins)
-    bins.remove(bin_choiced)
-    number_bins = len(bins)
-    for item in bin_choiced["itens"]:
-        index_random = random.randint(0, number_bins - 1)
-        add_item_in_bin(bins[index_random], item)
-    return bins
 
 def test_first_fit():
     BIN_TOTAL_SPACE = 5
