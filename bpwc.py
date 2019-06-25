@@ -28,9 +28,32 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
             solution.append({"itens":[item], "space_left":BIN_TOTAL_SPACE-item["value"]})
     return solution
 
-def local_search(bins):
+#TODO - fazer realocate olhando se há espaço vazio no outro bin
+def realocate(bin_left, bin_right):
+    return True
+
+#TODO - verificar conflitos no swap
+def swap_bins(bin_left, bin_right, bin_size):
+    for item_bin_left in bin_left["itens"]:
+        for item_bin_right in bin_right["itens"]:
+            # Verifica se o item da esquerda é menor e se o espaço no bin dele é maior
+            if(item_bin_right["value"] > item_bin_left["value"]):
+                if(item_bin_left["value"] + bin_left["space_left"] > item_bin_right["value"] + bin_right["space_left"]):
+                    aux = item_bin_left
+                    setItemBin(bin_right, aux)
+                    removeItemBin(bin_left, item_bin_left)
+                    aux = item_bin_right
+                    setItemBin(bin_left, aux)
+                    removeItemBin(bin_right, item_bin_right)
+                    return bin_left, bin_right                 
+        
+    return bin_left, bin_right
+
+def local_search(bins, bin_size):
     random.shuffle(bins)
-    
+    for i in range(1,len(bins)):
+        if (bins[i-1]["space_left"] < 0 or bins[i]["space_left"] < 0):
+            bins[i-1], bins[i] = swap_bins(bins[i-1], bins[i], bin_size)
     return bins
 
 def isBinAvaliable(bins, item, conflicts):
@@ -66,6 +89,11 @@ def getLowerLimit(bin_total_space, fixtures):
 def setItemBin(bin, item):
     bin["itens"].append(item)
     bin["space_left"] = bin["space_left"] - item["value"]
+    return bin
+
+def removeItemBin(bin, item):
+    bin["space_left"] = bin["space_left"] + item["value"]
+    bin["itens"].remove(item)    
     return bin
 
 def test_first_fit():
@@ -118,7 +146,7 @@ def test_solution_viability_with_conflicts():
 
 def bin_packing_resolve():
     
-    BIN_TOTAL_SPACE = 5
+    BIN_TOTAL_SPACE = 10
     MAX_PERTUBATION = 5
 
     conflicts = {
@@ -130,9 +158,13 @@ def bin_packing_resolve():
     fixtures = [
                 {"value":5, "color": 0},
                 {"value":4, "color": 0},
+                {"value":4, "color": 0},
+                {"value":4, "color": 0},
                 {"value":3, "color": 0},
-                {"value":2, "color": 2},
-                {"value":2, "color": 0}
+                {"value":2, "color": 0},
+                {"value":2, "color": 0},
+                {"value":2, "color": 0},
+                {"value":4, "color": 0}
               ]
 
     solution = first_fit_decreasing(fixtures, BIN_TOTAL_SPACE, conflicts)    
@@ -146,7 +178,10 @@ def bin_packing_resolve():
         pertubation_count = 0
 
         while (pertubation_count <= MAX_PERTUBATION and not isSolutionViable(new_solution, BIN_TOTAL_SPACE, conflicts)):
-            new_solution = local_search(new_solution)
+            new_solution = local_search(new_solution, BIN_TOTAL_SPACE)
+            #TODO - Ejection
+
+            #TODO - Pertubação
 
         #caso não ache uma solução com a busca e a pertubação ele para
         if(isSolutionViable(new_solution, BIN_TOTAL_SPACE, conflicts)): 
