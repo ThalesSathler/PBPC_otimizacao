@@ -1,11 +1,11 @@
 import random
 
-def isSolutionViable(solution, BIN_TOTAL_SPACE, conflicts):
+def is_solution_viable(solution, BIN_TOTAL_SPACE, conflicts):
     for bins in solution:
         if bins["space_left"] < 0:
             return False
         for item in bins["itens"]:
-            if hasConflict(conflicts, item, bins):
+            if has_conflict(conflicts, item, bins):
                 return False
     return True
 
@@ -18,7 +18,7 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
             continue
         inserted = False
         for bins in solution:
-            if isBinAvaliable(bins, item, conflicts):
+            if is_bin_avaliable(bins, item, conflicts):
                 bins["itens"].append(item)
                 bins["space_left"] -= item["value"]
                 inserted = True
@@ -32,7 +32,6 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
 def realocate(bin_left, bin_right):
     return True
 
-#TODO - verificar conflitos no swap
 def swap_bins(bin_left, bin_right, bin_size):
     for item_bin_left in bin_left["itens"]:
         for item_bin_right in bin_right["itens"]:
@@ -40,11 +39,11 @@ def swap_bins(bin_left, bin_right, bin_size):
             if(item_bin_right["value"] > item_bin_left["value"]):
                 if(item_bin_left["value"] + bin_left["space_left"] > item_bin_right["value"] + bin_right["space_left"]):
                     aux = item_bin_left
-                    setItemBin(bin_right, aux)
-                    removeItemBin(bin_left, item_bin_left)
+                    set_item_bin(bin_right, aux)
+                    remove_item_bin(bin_left, item_bin_left)
                     aux = item_bin_right
-                    setItemBin(bin_left, aux)
-                    removeItemBin(bin_right, item_bin_right)
+                    set_item_bin(bin_left, aux)
+                    remove_item_bin(bin_right, item_bin_right)
                     return bin_left, bin_right                 
         
     return bin_left, bin_right
@@ -56,8 +55,8 @@ def local_search(bins, bin_size):
             bins[i-1], bins[i] = swap_bins(bins[i-1], bins[i], bin_size)
     return bins
 
-def isBinAvaliable(bins, item, conflicts):
-    return bins["space_left"] >= item["value"] and hasConflict(conflicts, item, bins) == False
+def is_bin_avaliable(bins, item, conflicts):
+    return bins["space_left"] >= item["value"] and has_conflict(conflicts, item, bins) == False
 
 def reduce_bins(bins):    
     bin_choiced = random.choice(bins)
@@ -65,16 +64,16 @@ def reduce_bins(bins):
     number_bins = len(bins)
     for item in bin_choiced["itens"]:
         index_random = random.randint(0, number_bins - 1)
-        setItemBin(bins[index_random], item)
+        set_item_bin(bins[index_random], item)
     return bins
                 
-def hasConflict(conflicts, item, bins):
+def has_conflict(conflicts, item, bins):
     for item_bin in bins["itens"]:
         if item_bin["color"] in conflicts[str(item["color"])]:
             return True
     return False
 
-def getLowerLimit(bin_total_space, fixtures):
+def get_lower_limit(bin_total_space, fixtures):
     total_size = 0
     for fixture in fixtures:
         total_size += fixture["value"]
@@ -86,12 +85,12 @@ def getLowerLimit(bin_total_space, fixtures):
 
     return lower_limit
 
-def setItemBin(bin, item):
+def set_item_bin(bin, item):
     bin["itens"].append(item)
     bin["space_left"] = bin["space_left"] - item["value"]
     return bin
 
-def removeItemBin(bin, item):
+def remove_item_bin(bin, item):
     bin["space_left"] = bin["space_left"] + item["value"]
     bin["itens"].remove(item)    
     return bin
@@ -120,7 +119,7 @@ def test_first_fit():
                         {"itens":[{"value":1, "color": 2}], "space_left": 4},
                      ]
     
-    x = getLowerLimit(BIN_TOTAL_SPACE, fixture)
+    x = get_lower_limit(BIN_TOTAL_SPACE, fixture)
 
     S = first_fit_decreasing(fixture, BIN_TOTAL_SPACE, conflicts)
     assert S == solutionExpected
@@ -141,7 +140,7 @@ def test_solution_viability_with_conflicts():
                 {"itens":[{"value":3, "color": 0},{"value":2, "color": 0}], "space_left": 0},
               ]
 
-    response = isSolutionViable(fixture, BIN_TOTAL_SPACE, conflicts)
+    response = is_solution_viable(fixture, BIN_TOTAL_SPACE, conflicts)
     assert response == False
 
 def bin_packing_resolve():
@@ -168,23 +167,23 @@ def bin_packing_resolve():
               ]
 
     solution = first_fit_decreasing(fixtures, BIN_TOTAL_SPACE, conflicts)    
-    min_bins_count = getLowerLimit(BIN_TOTAL_SPACE, fixtures)
+    min_bins_count = get_lower_limit(BIN_TOTAL_SPACE, fixtures)
     bins_count = len(solution)   
     
 
-    while (bins_count >= min_bins_count and isSolutionViable(solution, BIN_TOTAL_SPACE, conflicts)):
+    while (bins_count >= min_bins_count and is_solution_viable(solution, BIN_TOTAL_SPACE, conflicts)):
         new_solution = reduce_bins(solution)
         bins_count -= 1
         pertubation_count = 0
 
-        while (pertubation_count <= MAX_PERTUBATION and not isSolutionViable(new_solution, BIN_TOTAL_SPACE, conflicts)):
+        while (pertubation_count <= MAX_PERTUBATION and not is_solution_viable(new_solution, BIN_TOTAL_SPACE, conflicts)):
             new_solution = local_search(new_solution, BIN_TOTAL_SPACE)
             #TODO - Ejection
 
             #TODO - Pertubação
 
         #caso não ache uma solução com a busca e a pertubação ele para
-        if(isSolutionViable(new_solution, BIN_TOTAL_SPACE, conflicts)): 
+        if(is_solution_viable(new_solution, BIN_TOTAL_SPACE, conflicts)): 
             solution = new_solution
         else:
             break
