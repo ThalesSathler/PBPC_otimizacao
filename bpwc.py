@@ -29,8 +29,14 @@ def first_fit_decreasing(itens, BIN_TOTAL_SPACE, conflicts):
     return solution
 
 #TODO - fazer realocate olhando se há espaço vazio no outro bin
-def realocate(bin_left, bin_right):
-    return True
+def relocate(bin_left, bin_right):
+    random.shuffle(bin_left["itens"])
+    for item in bin_left["itens"]:
+        if bin_right["space_left"] - item["value"] >= 0:
+            bin_left = remove_item_bin(bin_left, item)
+            bin_right = set_item_bin(bin_right, item)
+            break
+    return bin_left, bin_right
 
 def swap_bins(bin_left, bin_right, bin_size):
     for item_bin_left in bin_left["itens"]:
@@ -48,15 +54,39 @@ def swap_bins(bin_left, bin_right, bin_size):
         
     return bin_left, bin_right
 
+# TODO Refact bins para solution
 def local_search(bins, bin_size):
     random.shuffle(bins)
     for i in range(1,len(bins)):
         if (bins[i-1]["space_left"] < 0 or bins[i]["space_left"] < 0):
             bins[i-1], bins[i] = swap_bins(bins[i-1], bins[i], bin_size)
+            # TODO Adicionar o relocate
     return bins
 
 def is_bin_avaliable(bins, item, conflicts):
     return bins["space_left"] >= item["value"] and has_conflict(conflicts, item, bins) == False
+
+def is_bin_conflicted(conflicts, bins):
+    for item in bins["itens"]:
+        if has_conflict(conflicts, item, bins):
+            return True
+    return False
+
+def perturbate(conflicts, solution):
+    new_solution = solution
+    random.shuffle(new_solution)
+    perturbated = False
+    for idx, bins in enumerate(new_solution):
+        if is_bin_conflicted(conflicts,bins) or bins["space_left"] < 0:
+            if idx > 0:
+                new_solution[idx], new_solution[idx-1] = relocate(bins, new_solution[idx-1])
+            else:
+                new_solution[idx], new_solution[idx+1] = relocate(bins, new_solution[idx+1])
+            perturbated = True
+            break
+    if not perturbated:
+        new_solution[0], new_solution[1] = relocate(new_solution[0], new_solution[1])
+    return new_solution
 
 def reduce_bins(bins):    
     bin_choiced = random.choice(bins)
@@ -180,7 +210,7 @@ def bin_packing_resolve():
             new_solution = local_search(new_solution, BIN_TOTAL_SPACE)
             #TODO - Ejection
 
-            #TODO - Pertubação
+            perturbate(conflicts, new_solution)
 
         #caso não ache uma solução com a busca e a pertubação ele para
         if(is_solution_viable(new_solution, BIN_TOTAL_SPACE, conflicts)): 
