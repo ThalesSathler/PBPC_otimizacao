@@ -38,7 +38,7 @@ def relocate(bin_left, bin_right):
             break
     return bin_left, bin_right
 
-def swap_bins(bin_left, bin_right, bin_size):
+def swap(bin_left, bin_right, bin_size):
     for item_bin_left in bin_left["itens"]:
         for item_bin_right in bin_right["itens"]:
             # Verifica se o item da esquerda é menor e se o espaço no bin dele é maior
@@ -54,14 +54,17 @@ def swap_bins(bin_left, bin_right, bin_size):
         
     return bin_left, bin_right
 
-# TODO Refact bins para solution
-def local_search(bins, bin_size):
-    random.shuffle(bins)
-    for i in range(1,len(bins)):
-        if (bins[i-1]["space_left"] < 0 or bins[i]["space_left"] < 0):
-            bins[i-1], bins[i] = swap_bins(bins[i-1], bins[i], bin_size)
-            # TODO Adicionar o relocate
-    return bins
+def local_search(solution, bin_size):
+    random.shuffle(solution)
+    for i in range(1,len(solution)):
+        if (solution[i-1]["space_left"] < 0 or solution[i]["space_left"] < 0):
+            swap_left_bin, swap_right_bin = swap(solution[i-1], solution[i], bin_size)
+            relocate_left_bin, relocate_right_bin = relocate(solution[i-1], solution[i])
+            if swap_left_bin["space_left"] + swap_right_bin["space_left"] <= relocate_left_bin["space_left"] + relocate_right_bin["space_left"]:
+            	solution[i-1], solution[i] = swap_left_bin, swap_right_bin
+            else:
+            	solution[i-1], solution[i] = relocate_left_bin, relocate_right_bin
+    return solution
 
 def is_bin_avaliable(bins, item, conflicts):
     return bins["space_left"] >= item["value"] and has_conflict(conflicts, item, bins) == False
@@ -74,14 +77,13 @@ def is_bin_conflicted(conflicts, bins):
 
 def perturbate(conflicts, solution):
     new_solution = solution
-    random.shuffle(new_solution)
     perturbated = False
-    for idx, bins in enumerate(new_solution):
+    for index, bins in enumerate(new_solution):
         if is_bin_conflicted(conflicts,bins) or bins["space_left"] < 0:
-            if idx > 0:
-                new_solution[idx], new_solution[idx-1] = relocate(bins, new_solution[idx-1])
+            if index > 0:
+                new_solution[index], new_solution[index-1] = relocate(bins, new_solution[index-1])
             else:
-                new_solution[idx], new_solution[idx+1] = relocate(bins, new_solution[idx+1])
+                new_solution[index], new_solution[index+1] = relocate(bins, new_solution[index+1])
             perturbated = True
             break
     if not perturbated:
@@ -176,7 +178,8 @@ def test_solution_viability_with_conflicts():
 def bin_packing_resolve():
     
     BIN_TOTAL_SPACE = 10
-    MAX_PERTUBATION = 5
+    MAX_PERTUBATION = 10
+    MAX_LOCAL_SEARCH = 10
 
     conflicts = {
         "0":[2],
@@ -205,17 +208,27 @@ def bin_packing_resolve():
         new_solution = reduce_bins(solution)
         bins_count -= 1
         pertubation_count = 0
+        local_search_count = 0
 
         while (pertubation_count <= MAX_PERTUBATION and not is_solution_viable(new_solution, BIN_TOTAL_SPACE, conflicts)):
             new_solution = local_search(new_solution, BIN_TOTAL_SPACE)
+            
             #TODO - Ejection
+            
+            if local_search_count >= MAX_LOCAL_SEARCH: 
+            	new_solution = perturbate(conflicts, new_solution)
+            	pertubation_count += 1
+            	local_search_count = 0
 
-            perturbate(conflicts, new_solution)
+            local_search_count += 1
+            print("perturbações ", pertubation_count,"busca local ", local_search_count)
 
         #caso não ache uma solução com a busca e a pertubação ele para
         if(is_solution_viable(new_solution, BIN_TOTAL_SPACE, conflicts)): 
             solution = new_solution
         else:
             break
+
+    print(solution)
         
 bin_packing_resolve()
